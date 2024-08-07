@@ -1,0 +1,165 @@
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = False
+
+# Site ID
+SITE_ID = 1
+
+#Allowed Hosts. If DEBUG is False, the FQDN being used must be included in ALLOWED_HOSTS
+ALLOWED_HOSTS = ['example.com']
+
+#ADMINS. We should have at least one
+ADMINS = (('John Doe', 'john@example.com'),)
+
+#Server Email
+SERVER_EMAIL = 'no-reply@example.com'
+
+#Application Name
+APP_NAME = 'Django Starter App'
+ADMIN_PORTAL_NAME = 'Django Starter App Admin Portal'
+ADMIN_SITE_TITLE = 'Django Starter App Administration'
+
+ADMIN_TWO_FACTOR_NAME = APP_NAME
+
+# logging
+LOGGING_FILE_PATH = BASE_DIR + '/logs/app.log'
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGGING_FILE_PATH,
+            'formatter': 'verbose',
+            'maxBytes': 50000,
+            'backupCount': 1000
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'formatter': 'verbose'
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+
+    },
+}
+
+# Database
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'dbname',
+        'USER': 'dbuser',
+        'PASSWORD': 'WSjf2347swejfwfaa',
+        'HOST': 'localhost',
+        'PORT': '',
+    }
+}
+
+
+PAGINATION=30
+
+#Email settings
+
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_USE_TLS = False
+DEFAULT_FROM_EMAIL = SERVER_EMAIL
+
+#Static File Setting
+
+STATIC_ROOT = "/path/to/your/static/root"
+
+#Path to Media
+MEDIA_URL = '/media/'
+
+#TimeZone
+TIME_ZONE = "Africa/Nairobi"
+
+
+#Recaptcha keys
+RECAPTCHA_PUBLIC_KEY = 'MyRecaptchaKey123'
+RECAPTCHA_PRIVATE_KEY = 'MyRecaptchaPrivateKey456'
+
+# Allowed email domains
+ALLOWED_DOMAIN_SUFFIXES = ['.ac.ke', '.edu', 'or.ke', 'org']
+
+
+#Enable saml sso
+ENABLE_SSO = False
+
+# Cache
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+# JWT options
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': False,
+
+    'ALGORITHM': 'HS256',
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'JWK_URL': None,
+    'LEEWAY': 0,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+
+    'JTI_CLAIM': 'jti',
+
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(hours=1),
+}

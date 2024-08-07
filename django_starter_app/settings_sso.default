@@ -1,0 +1,220 @@
+from os import getcwd, path
+import saml2
+import saml2.saml
+
+BASEDIR = path.dirname(path.abspath(__file__))
+# BASE_DIR =  path.dirname(path.realpath(__file__))
+ROOT_DIR = path.dirname(getcwd())
+
+SAML_SESSION_COOKIE_NAME = 'saml_session'
+SESSION_COOKIE_SECURE = True # This prevents cross-site scripting (XSS)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SAML_IGNORE_LOGOUT_ERRORS = True # ignore these errors and perform a local Django logout nonetheless
+#SAML2_DISCO_URL = 'https://ds-01.federation.ke/ds/'
+SAML_DJANGO_USER_MAIN_ATTRIBUTE = 'username'
+
+SAML_ATTRIBUTE_MAPPING = {
+    'uid': ('username', ),
+    'mail': ('email', ),
+    'first_name': ('first_name', ),
+    'last_name': ('last_name', ),
+}
+
+SAML_CREATE_UNKNOWN_USER = True
+
+
+BASE_HOSTNAME = 'https://example.com'
+SSO_DIR = path.join(ROOT_DIR, 'django_starter_app', 'sso')
+SSO_LOGS_FILE = path.join(ROOT_DIR, 'django_starter_app', 'logs', 'sso.log')
+
+SAML_CONFIG = {
+  # full path to the xmlsec1 binary programm
+  'xmlsec_binary': '/usr/bin/xmlsec1',
+
+  # your entity id, usually your subdomain plus the url to the metadata view
+  'entityid': '{hostname}/sso/metadata/'.format(hostname=BASE_HOSTNAME),
+
+  # directory with attribute mapping
+  #   'attribute_map_dir': path.join(BASEDIR, 'attribute-maps'),
+  'attribute_map_dir': '{SSO_DIR}/attribute-maps'.format(SSO_DIR=SSO_DIR),
+
+  # Permits to have attributes not configured in attribute-mappings
+  # otherwise...without OID will be rejected
+  'allow_unknown_attributes': True,
+
+  # this block states what services we provide
+  'service': {
+      # we are just a lonely SP
+      'sp' : {
+            # 'name': [('Django Starter App', 'en')],
+            'name_id_format': saml2.saml.NAMEID_FORMAT_TRANSIENT,
+            # For Okta add signed logout requets. Enable this:
+            # "logout_requests_signed": True,
+
+            'endpoints': {
+                # url and binding to the assetion consumer service view
+                # do not change the binding or service name
+                'assertion_consumer_service': [
+                    ('{hostname}/sso/acs/'.format(hostname=BASE_HOSTNAME),
+                    saml2.BINDING_HTTP_POST),
+                ],
+                # url and binding to the single logout service view
+                # do not change the binding or service name
+                'single_logout_service': [
+                    # Disable next two lines for HTTP_REDIRECT for IDP's that only support HTTP_POST. Ex. Okta:
+                    ('{hostname}/sso/ls/'.format(hostname=BASE_HOSTNAME),
+                    saml2.BINDING_HTTP_REDIRECT),
+                    ('{hostname}/sso/ls/post'.format(hostname=BASE_HOSTNAME),
+                    saml2.BINDING_HTTP_POST),
+                ],
+            },
+
+            'signing_algorithm':  saml2.xmldsig.SIG_RSA_SHA256,
+            'digest_algorithm':  saml2.xmldsig.DIGEST_SHA256,
+
+            # Mandates that the identity provider MUST authenticate the
+            # presenter directly rather than rely on a previous security context.
+            'force_authn': False,
+
+            # Enable AllowCreate in NameIDPolicy.
+            'name_id_format_allow_create': False,
+
+            # attributes that this project need to identify a user
+            'required_attributes': ['uid'],
+
+            # attributes that may be useful to have but not required
+            'optional_attributes': ['displayName', 'eduPersonAffiliation', 'eduPersonPrimaryAffiliation', 'mail'],
+
+            'want_response_signed': True,
+            'authn_requests_signed': True,
+            'logout_requests_signed': True,
+            # Indicates that Authentication Responses to this SP must
+            # be signed. If set to True, the SP will not consume
+            # any SAML Responses that are not signed.
+            'want_assertions_signed': True,
+
+            'only_use_keys_in_metadata': True,
+
+            # When set to true, the SP will consume unsolicited SAML
+            # Responses, i.e. SAML Responses for which it has not sent
+            # a respective SAML Authentication Request.
+            'allow_unsolicited': False,
+
+            "requested_authn_context": {
+                "authn_context_class_ref": [
+                    "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport",
+                    "urn:oasis:names:tc:SAML:2.0:ac:classes:TLSClient",
+                ],
+                "comparison": "minimum",
+            },
+
+            # in this section the list of IdPs we talk to are defined
+            # This is not mandatory! All the IdP available in the metadata will be considered instead.
+            'idp': {
+                # we do not need a WAYF service since there is
+                # only an IdP defined here. This IdP should be
+                # present in our metadata
+
+                # the keys of this dictionary are entity ids
+                'https://example-idp.ke/simplesaml/saml2/idp/metadata.php': {
+                    'single_sign_on_service': {
+                        saml2.BINDING_HTTP_REDIRECT: 'https://example-idp.ke/simplesaml/saml2/idp/SSOService.php',
+                    },
+                    'single_logout_service': {
+                        saml2.BINDING_HTTP_REDIRECT: 'https://example-idp.ke/simplesaml/saml2/idp/SingleLogoutService.php',
+                    },
+                },
+            },
+        },
+    },
+
+    # where the remote metadata is stored, local, remote or mdq server.
+    # One metadatastore or many ...
+    'metadata': {
+        'local': [path.join(SSO_DIR, 'remote_metadata.xml')],
+        'remote': [{"url": "https://example-idp.ke/simplesaml/saml2/idp/metadata.php"},],
+        # 'mdq': [{
+        #     "url": "https://ds.testunical.it",
+        #     "cert": "certficates/others/ds.testunical.it.cert",
+        # }]
+    },
+
+    # set to 1 to output debugging information
+    'debug': 1,
+
+    # Signing
+    'key_file': path.join(SSO_DIR, 'private.key'),  # private part
+    'cert_file': path.join(SSO_DIR, 'public.cert'),  # public part
+
+    # Encryption
+    'encryption_keypairs': [{
+        'key_file': path.join(SSO_DIR, 'private.key'),  # private part
+        'cert_file': path.join(SSO_DIR, 'public.cert'),  # public part
+    }],
+
+    # own metadata settings
+    'contact_person': [
+        {
+            'given_name': 'ABC',
+            'sur_name': 'Support',
+            'company': 'ABC',
+            'email_address': 'sysadmins@ABC.or.ke',
+            'contact_type': 'technical'
+        },
+        {
+            'given_name': 'John',
+            'sur_name': 'doe',
+            'company': 'ABC',
+            'email_address': 'edoe@ABC.or.ke',
+            'contact_type': 'technical'
+        },
+    ],
+  # you can set multilanguage information here
+  'name': 'Django Starter App',
+  'organization': {
+      'name': [('ABC', 'en')],
+      'display_name': [('ABC (ABC)', 'en')],
+      'url': [('https://ABC.or.ke', 'en')],
+    },
+
+    'description': 'Django Starter App application for online meetings and classes',
+
+    # SSO logging configs
+    "logging": {
+        "version": 1,
+        "formatters": {
+            "simple": {
+                'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s',
+            },
+        },
+        "handlers": {
+            "file": {
+                "class": "logging.handlers.RotatingFileHandler",
+                "filename": SSO_LOGS_FILE,
+                "level": "DEBUG",
+                "formatter": "simple",
+            },
+            'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'formatter': 'verbose'
+        },
+        },
+        "loggers": {
+            "saml2": {
+                "level": "DEBUG"
+            },
+            'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        },
+        "root": {
+            "level": "DEBUG",
+            "handlers": [
+                "file",
+            ],
+        },
+    },
+}
