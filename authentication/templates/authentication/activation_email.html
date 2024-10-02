@@ -1,11 +1,23 @@
-{% autoescape off%}
-Dear {{username}},
+{% autoescape off %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activate Your Account</title>
+</head>
+<body>
+    <p>Dear {{ first_name }},</p>
 
-Your registration was successful. Please click this link below to verify your account.
+    <p>Your registration was successful. Please click the link below to verify your account:</p>
 
-{{frontend_base_url}}/activate/{{uid}}/{{token}}/
+    <p>
+        <a href="{{ frontend_base_url }}/activate?uid={{ uid }}&token={{ token }}">Activate Your Account</a>
+    </p>
 
-Please note that this link will expire after 24hrs.
+    <p>Please note that this link will expire after 24 hours.</p>
 
-Thank you for using our service.
+    <p>Thank you for using our service.</p>
+</body>
+</html>
 {% endautoescape %}
